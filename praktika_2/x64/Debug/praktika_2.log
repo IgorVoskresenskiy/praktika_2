@@ -1,0 +1,4 @@
+﻿  main.c
+C:\Users\msi\documents\praktika_2\main.c(37,25): warning C4113: "DWORD (__cdecl *)(int,int)" отличается в списках параметров от "LPTHREAD_START_ROUTINE"
+C:\Users\msi\documents\praktika_2\main.c(38,9): warning C4022: CreateThread: несоответствие указателя для фактического параметра 4
+  praktika_2.vcxproj -> C:\Users\msi\documents\praktika_2\x64\Debug\praktika_2.exe
