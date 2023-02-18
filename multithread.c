@@ -9,8 +9,13 @@
 
 #include "multithread.h"
 
+#define EXIT_COMMAND 4
+
 int id = 0;
 int n = 0;
+
+char argv[15] = { 0 };
+int argc[3] = { 0 };
 
 typedef struct rngNode
 {
@@ -19,6 +24,39 @@ typedef struct rngNode
     struct rngNode* next;
 } rngNode;
 rngNode* rngListHead = NULL;
+
+void command_parse(char* inputCommand)
+{
+    int i = 0;
+    int counter = 0;
+    char argcToConvert[5] = { 0 };
+    while ((inputCommand[i] != ' ') && (inputCommand[i] != '\0'))
+    {
+        argv[i] = inputCommand[i];
+        i++;
+    }
+    i++;
+    while ((inputCommand[i] != ' ') && (inputCommand[i] != '\0'))
+    {
+        argcToConvert[counter] = inputCommand[i];
+        i++;
+        counter++;
+    }
+    argc[0] = atoi(argcToConvert);
+    for (int i = 0; i < 5; i++)
+    {
+        argcToConvert[i] = 0;
+    }
+    i++;
+    counter = 0;
+    while ((inputCommand[i] != ' ') && (inputCommand[i] != '\0'))
+    {
+        argcToConvert[counter] = inputCommand[i];
+        i++;
+        counter++;
+    }
+    argc[1] = atoi(argcToConvert);
+}
 
 bool push_rng(rngNode** rngHead, int rngNumberInput, int rngTimeAskedInput)
 {
@@ -77,7 +115,7 @@ DWORD WINAPI MyThreadFunction(int n)
 
 int main()
 {
-    printf("choose action with rng");
+    printf("commands for rng actions: ");
     printf("\n");
     printf("1 - print amount of rngs");
     printf("\n");
