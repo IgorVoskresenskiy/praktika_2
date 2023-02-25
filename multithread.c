@@ -19,8 +19,9 @@ char argv[4][20] = { 0 };
 typedef struct rngNode
 {
     int rngValue;
-    int rngNumber;
+    int rngMaxNumber;
     int rngTimeAsked;
+    int rngTimeSinceUpdate;
     struct rngNode* next;
 } rngNode;
 rngNode* rngListHead = NULL;
@@ -61,8 +62,9 @@ bool push_rng(rngNode** rngHead, int rngNumberInput, int rngTimeAskedInput)
     rngNode* tmp = (rngNode*)malloc(sizeof(rngNode));
     if (tmp != NULL)
     {
-        tmp->rngNumber = rngNumberInput;
+        tmp->rngMaxNumber = rngNumberInput;
         tmp->rngTimeAsked = rngTimeAskedInput;
+        tmp->rngTimeSinceUpdate = 0;
         tmp->next = (*rngHead);
         (*rngHead) = tmp;
         return true;
@@ -91,20 +93,32 @@ int count_rng_summ(rngNode* rngHead)
     rngNode* tmp = rngHead;
     while (tmp != NULL)
     {
-        rngSumm += tmp->rngNumber;
+        rngSumm += tmp->rngValue;
         tmp = tmp->next;
     }
     return rngSumm;
 }
 
-DWORD WINAPI MyThreadFunction(int n) //needs to only update the rng list
+void update_rngs(rngNode* rngHead)
+{
+    rngNode* tmp = rngHead;
+    while (tmp != NULL)
+    {
+        tmp->rngTimeSinceUpdate += 1000;
+        if (tmp->rngTimeSinceUpdate == tmp->rngTimeAsked)
+        {
+            tmp->rngValue = rand() / tmp->rngMaxNumber;
+        }
+        tmp = tmp->next;
+    }
+}
+
+DWORD WINAPI MyThreadFunction(int n)
 {
     while (true)
     {
-        //n += 1;
-        //printf_s("%d\n", n);
-        
         Sleep(1000);
+        update_rngs(rngListHead);
     }
 }
 
@@ -147,7 +161,7 @@ int main()
 
         if (strstr(argv[0], "add_rng") != NULL)
         {
-            if (!push_rng(rngListHead, atoi(argv[1]), atoi(argv[2])))
+            if (!push_rng(rngListHead, atoi(argv[1]), atoi(argv[2])*1000))
             {
                 printf_s("there is no free memory");
             }
@@ -156,8 +170,6 @@ int main()
         gets_s(commandInput, 20);
         command_parse(commandInput);
 
-       /* printf_s("%s\n", __FUNCTION__);
-        Sleep(100);*/
     }
 
 }
