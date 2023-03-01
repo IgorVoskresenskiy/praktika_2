@@ -7,27 +7,32 @@
 #include "stdint.h"
 #include "time.h"
 #include "string.h"
+#include "synchapi.h"
 
 #include "multithread.h"
 
+#define ONE_SECOND_IN_MS 1000
+typedef struct rngNode
+{
+    unsigned int rngValue;
+    int rngMaxNumber;
+    int rngTimeBetweenUpdatesMs;
+    int rngTimeSinceUpdateMs;
+    struct rngNode* next;
+} rngNode;
+rngNode* rngListHead = NULL;
+
+HANDLE rngListMutex;
 int id = 0;
 int n = 0;
 
 int argc = 0;
 char argv[4][20] = { 0 };
 
-typedef struct rngNode
-{
-    int rngValue;
-    int rngMaxNumber;
-    int rngTimeAsked;
-    int rngTimeSinceUpdate;
-    struct rngNode* next;
-} rngNode;
-rngNode* rngListHead = NULL;
-
 void command_parse(char* inputCommand)
 {
+    memset(argv, 0, 80);
+    argc = 0;
     int i = 0;
     while (inputCommand[i] != '\0')
     {
@@ -42,15 +47,14 @@ void command_parse(char* inputCommand)
     int argv2 = 0;
     int spaceCount = 0;
     i = 0;
-    while ((inputCommand[i] != '\0') && (spaceCount < argc))
+    for (int c = 0; c < argc; c++)
     {
-        while (inputCommand[i] != ' ')
+        while ((inputCommand[i] != ' ')&& (inputCommand[i] != '\0'))
         {
             argv[counter][argv2] = inputCommand[i];
             i++;
             argv2++;
         }
-        spaceCount++;
         argv2 = 0;
         i++;
         counter++;
@@ -59,18 +63,31 @@ void command_parse(char* inputCommand)
 
 bool push_rng(rngNode** rngHead, int rngNumberInput, int rngTimeAskedInput)
 {
+    WaitForSingleObject(
+        rngListMutex,
+        INFINITE);
     rngNode* tmp = (rngNode*)malloc(sizeof(rngNode));
     if (tmp != NULL)
     {
         tmp->rngMaxNumber = rngNumberInput;
-        tmp->rngTimeAsked = rngTimeAskedInput;
-        tmp->rngTimeSinceUpdate = 0;
-        tmp->next = (*rngHead);
-        (*rngHead) = tmp;
+        tmp->rngTimeBetweenUpdatesMs = rngTimeAskedInput;
+        tmp->rngTimeSinceUpdateMs = 0;
+        if (rngHead == NULL)
+        {
+            tmp->next = NULL;
+            rngHead = &tmp;
+        }
+        else
+        {
+            tmp->next = (*rngHead);
+            (*rngHead) = tmp;
+        }
+        ReleaseMutex(rngListMutex);
         return true;
     }
     else
     {
+        ReleaseMutex(rngListMutex);
         return false;
     }
 }
@@ -78,56 +95,73 @@ bool push_rng(rngNode** rngHead, int rngNumberInput, int rngTimeAskedInput)
 int count_rngs(rngNode* rngHead)
 {
     int rngCount=0;
+    WaitForSingleObject(
+        rngListMutex,
+        INFINITE);
     rngNode* tmp = rngHead;
     while (tmp != NULL)
     {
         rngCount += 1;
         tmp = tmp->next;
     }
+    ReleaseMutex(rngListMutex);
     return rngCount;
 }
 
 int count_rng_summ(rngNode* rngHead)
 {
     int rngSumm = 0;
+    WaitForSingleObject(
+        rngListMutex,
+        INFINITE);
     rngNode* tmp = rngHead;
     while (tmp != NULL)
     {
         rngSumm += tmp->rngValue;
         tmp = tmp->next;
     }
+    ReleaseMutex(rngListMutex);
     return rngSumm;
 }
 
 void update_rngs(rngNode* rngHead)
 {
+    WaitForSingleObject(
+        rngListMutex,
+        INFINITE);
     rngNode* tmp = rngHead;
     while (tmp != NULL)
     {
-        tmp->rngTimeSinceUpdate += 1000;
-        if (tmp->rngTimeSinceUpdate == tmp->rngTimeAsked)
+        tmp->rngTimeSinceUpdateMs += ONE_SECOND_IN_MS;
+        if (tmp->rngTimeSinceUpdateMs == tmp->rngTimeBetweenUpdatesMs)
         {
             tmp->rngValue = rand() / tmp->rngMaxNumber;
         }
         tmp = tmp->next;
     }
+    ReleaseMutex(rngListMutex);
 }
 
-DWORD WINAPI MyThreadFunction(int n)
+DWORD WINAPI rng_updater(int n)
 {
     while (true)
     {
-        Sleep(1000);
+        Sleep(ONE_SECOND_IN_MS);
         update_rngs(rngListHead);
     }
 }
 
 int main()
 {
+    rngListMutex = CreateMutex(
+        NULL,              // default security attributes
+        FALSE,             // initially not owned
+        NULL);             // unnamed mutex
+
     CreateThread(
         NULL,                   // default security attributes
         0,                      // use default stack size  
-        MyThreadFunction,       // thread function name
+        rng_updater,            // thread function name
         NULL,                   // argument to thread function 
         0,                      // use default creation flags 
         &id);
@@ -147,11 +181,14 @@ int main()
     gets_s(commandInput, 20);
     command_parse(commandInput);
     
+
     while (strstr(argv[0], "exit") == NULL)
     {
         if (strstr(argv[0], "count_rngs") != NULL)
         {
-            printf_s(count_rngs(rngListHead));
+
+            printf("%d",count_rngs(rngListHead));
+
         }
 
         if (strstr(argv[0], "print_summ") != NULL)
@@ -161,9 +198,18 @@ int main()
 
         if (strstr(argv[0], "add_rng") != NULL)
         {
-            if (!push_rng(rngListHead, atoi(argv[1]), atoi(argv[2])*1000))
+            if (argc != 3)
             {
-                printf_s("there is no free memory");
+                printf_s("add_rng command have to have two arguments");
+            }
+            else
+            {
+                int MaxNumber = atoi(argv[1]);
+                int TimeBetweenUpdatesMs = atoi(argv[2]) * ONE_SECOND_IN_MS;
+                if (!push_rng(rngListHead, MaxNumber, TimeBetweenUpdatesMs))
+                {
+                    printf_s("there is no free memory");
+                }
             }
         }
 
