@@ -63,9 +63,7 @@ void command_parse(char* inputCommand)
 
 bool push_rng(rngNode** rngHead, int rngNumberInput, int rngTimeAskedInput)
 {
-    WaitForSingleObject(
-        rngListMutex,
-        INFINITE);
+    WaitForSingleObject(rngListMutex,INFINITE);
     rngNode* tmp = (rngNode*)malloc(sizeof(rngNode));
     if (tmp != NULL)
     {
@@ -95,9 +93,7 @@ bool push_rng(rngNode** rngHead, int rngNumberInput, int rngTimeAskedInput)
 int count_rngs(rngNode* rngHead)
 {
     int rngCount=0;
-    WaitForSingleObject(
-        rngListMutex,
-        INFINITE);
+    WaitForSingleObject(rngListMutex,INFINITE);
     rngNode* tmp = rngHead;
     while (tmp != NULL)
     {
@@ -111,9 +107,7 @@ int count_rngs(rngNode* rngHead)
 int count_rng_summ(rngNode* rngHead)
 {
     int rngSumm = 0;
-    WaitForSingleObject(
-        rngListMutex,
-        INFINITE);
+    WaitForSingleObject(rngListMutex,INFINITE);
     rngNode* tmp = rngHead;
     while (tmp != NULL)
     {
@@ -126,9 +120,7 @@ int count_rng_summ(rngNode* rngHead)
 
 void update_rngs(rngNode* rngHead)
 {
-    WaitForSingleObject(
-        rngListMutex,
-        INFINITE);
+    WaitForSingleObject(rngListMutex,INFINITE);
     rngNode* tmp = rngHead;
     while (tmp != NULL)
     {
@@ -136,6 +128,7 @@ void update_rngs(rngNode* rngHead)
         if (tmp->rngTimeSinceUpdateMs == tmp->rngTimeBetweenUpdatesMs)
         {
             tmp->rngValue = rand() / tmp->rngMaxNumber;
+            tmp->rngTimeSinceUpdateMs = 0;
         }
         tmp = tmp->next;
     }
@@ -153,18 +146,9 @@ DWORD WINAPI rng_updater(int n)
 
 int main()
 {
-    rngListMutex = CreateMutex(
-        NULL,              // default security attributes
-        FALSE,             // initially not owned
-        NULL);             // unnamed mutex
+    rngListMutex = CreateMutex(NULL,FALSE,NULL);
 
-    CreateThread(
-        NULL,                   // default security attributes
-        0,                      // use default stack size  
-        rng_updater,            // thread function name
-        NULL,                   // argument to thread function 
-        0,                      // use default creation flags 
-        &id);
+    CreateThread(NULL,0,rng_updater,NULL,0,&id);
 
     printf("Commands for rng actions: ");
     printf("\n\n");
@@ -184,23 +168,50 @@ int main()
 
     while (strstr(argv[0], "exit") == NULL)
     {
+        if ((strstr(argv[0], "count_rngs") == NULL) && (strstr(argv[0], "add_rng") == NULL) && (strstr(argv[0], "print_summ") == NULL))
+        {
+            printf("there is no such command");
+            printf("\n");
+        }
+
         if (strstr(argv[0], "count_rngs") != NULL)
         {
-
-            printf("%d",count_rngs(rngListHead));
-
+            if (argc != 1)
+            {
+                printf("count_rngs command have to have zero arguments");
+                printf("\n");
+            }
+            else
+            {
+                printf("amount of rngs active: ");
+                printf("\n");
+                printf("%d", count_rngs(rngListHead));
+                printf("\n");
+            }
         }
 
         if (strstr(argv[0], "print_summ") != NULL)
         {
-            printf_s(count_rng_summ(rngListHead));
+            if (argc != 1)
+            {
+                printf("print_summ command have to have zero arguments");
+                printf("\n");
+            }
+            else
+            {
+                printf("summ of rng values: ");
+                printf("\n");
+                printf("%d", count_rng_summ(rngListHead));
+                printf("\n");
+            }
         }
 
         if (strstr(argv[0], "add_rng") != NULL)
         {
             if (argc != 3)
             {
-                printf_s("add_rng command have to have two arguments");
+                printf("add_rng command have to have two arguments");
+                printf("\n");
             }
             else
             {
@@ -208,14 +219,12 @@ int main()
                 int TimeBetweenUpdatesMs = atoi(argv[2]) * ONE_SECOND_IN_MS;
                 if (!push_rng(rngListHead, MaxNumber, TimeBetweenUpdatesMs))
                 {
-                    printf_s("there is no free memory");
+                    printf("there is no free memory");
+                    printf("\n");
                 }
             }
         }
-
         gets_s(commandInput, 20);
         command_parse(commandInput);
-
     }
-
 }
