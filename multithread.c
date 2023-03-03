@@ -1,20 +1,10 @@
-#include "stdio.h"
-#include "stdlib.h"
-#include "stdbool.h"
-#include "windows.h"
-#include "tchar.h"
-#include "strsafe.h"
-#include "stdint.h"
-#include "time.h"
-#include "string.h"
-#include "synchapi.h"
-
 #include "multithread.h"
 
 #define ONE_SECOND_IN_MS 1000
+
 typedef struct rngNode
 {
-    unsigned int rngValue;
+    int rngValue;
     int rngMaxNumber;
     int rngTimeBetweenUpdatesMs;
     int rngTimeSinceUpdateMs;
@@ -23,9 +13,7 @@ typedef struct rngNode
 rngNode* rngListHead = NULL;
 
 HANDLE rngListMutex;
-int id = 0;
-int n = 0;
-
+int threadID = 0;
 int argc = 0;
 char argv[4][20] = { 0 };
 
@@ -70,16 +58,8 @@ bool push_rng(rngNode** rngHead, int rngNumberInput, int rngTimeAskedInput)
         tmp->rngMaxNumber = rngNumberInput;
         tmp->rngTimeBetweenUpdatesMs = rngTimeAskedInput;
         tmp->rngTimeSinceUpdateMs = 0;
-        if (rngHead == NULL)
-        {
-            tmp->next = NULL;
-            rngHead = &tmp;
-        }
-        else
-        {
-            tmp->next = (*rngHead);
-            (*rngHead) = tmp;
-        }
+        tmp->next = (*rngHead);
+        (*rngHead) = tmp;
         ReleaseMutex(rngListMutex);
         return true;
     }
@@ -111,7 +91,10 @@ int count_rng_summ(rngNode* rngHead)
     rngNode* tmp = rngHead;
     while (tmp != NULL)
     {
-        rngSumm += tmp->rngValue;
+        if (tmp->rngValue > 0)
+        {
+            rngSumm += tmp->rngValue;
+        }
         tmp = tmp->next;
     }
     ReleaseMutex(rngListMutex);
@@ -127,7 +110,8 @@ void update_rngs(rngNode* rngHead)
         tmp->rngTimeSinceUpdateMs += ONE_SECOND_IN_MS;
         if (tmp->rngTimeSinceUpdateMs == tmp->rngTimeBetweenUpdatesMs)
         {
-            tmp->rngValue = rand() / tmp->rngMaxNumber;
+            int rands = rand();
+            tmp->rngValue = rands % tmp->rngMaxNumber;
             tmp->rngTimeSinceUpdateMs = 0;
         }
         tmp = tmp->next;
@@ -144,11 +128,11 @@ DWORD WINAPI rng_updater(int n)
     }
 }
 
-int main()
+void multithread_list()
 {
     rngListMutex = CreateMutex(NULL,FALSE,NULL);
 
-    CreateThread(NULL,0,rng_updater,NULL,0,&id);
+    CreateThread(NULL,0,rng_updater,NULL,0,&threadID);
 
     printf("Commands for rng actions: ");
     printf("\n\n");
@@ -161,11 +145,10 @@ int main()
     printf("To exit type: \"exit\"");
     printf("\n");
 
-    uint8_t commandInput[20] = { 0 };
+    uint8_t commandInput[20] = {0};
     gets_s(commandInput, 20);
     command_parse(commandInput);
     
-
     while (strstr(argv[0], "exit") == NULL)
     {
         if ((strstr(argv[0], "count_rngs") == NULL) && (strstr(argv[0], "add_rng") == NULL) && (strstr(argv[0], "print_summ") == NULL))
@@ -217,9 +200,14 @@ int main()
             {
                 int MaxNumber = atoi(argv[1]);
                 int TimeBetweenUpdatesMs = atoi(argv[2]) * ONE_SECOND_IN_MS;
-                if (!push_rng(rngListHead, MaxNumber, TimeBetweenUpdatesMs))
+                if (!push_rng(&rngListHead, MaxNumber, TimeBetweenUpdatesMs))
                 {
                     printf("there is no free memory");
+                    printf("\n");
+                }
+                else
+                {
+                    printf("rng added succesfully");
                     printf("\n");
                 }
             }
