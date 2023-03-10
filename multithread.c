@@ -16,14 +16,16 @@ rngNode* rngListHead = NULL;
 HANDLE rngListMutex;
 int rngSumm = 0;
 int rngCount = 0;
-int threadID = 0;
 int argc = 0;
-char argv[4][20] = { 0 };
+
+
+void rng_init()
+{
+    rngListMutex = CreateMutex(NULL, FALSE, NULL);
+}
 
 bool command_parse(char* inputCommand)
 {
-    //char* ptrToArg = argv;
-
     memset(argv, 0, sizeof(argv));
     argc = 0;
     int i = 0;
@@ -38,12 +40,13 @@ bool command_parse(char* inputCommand)
         memcpy(argv[argc], ptrToStartOfArg, sizeOfParsedArg);
 
         if (ptrToParsingString == NULL)
+        {
             break;
+        }
 
         argc++;
-        // ћы точно знаем, что после последнего пробела будет аргумент, поэтому количество аргументов равно количеству пробелов + 1. “.е.
-        // ¬ цикле гаранитрировано не можем получить больше 3 аргуменов.
-        if (argc > 3)
+
+        if (argc > MAX_ARGC)
         {
             return false;
         }
@@ -61,21 +64,20 @@ bool command_parse(char* inputCommand)
 bool add_rng(rngNode** rngHead, int rngNumberInput, int rngTimeAskedInput)
 {
     rngNode* tmp = (rngNode*)malloc(sizeof(rngNode));
-    WaitForSingleObject(rngListMutex, INFINITE);
     if (tmp != NULL)
     {
         tmp->rngMaxNumber = rngNumberInput;
         tmp->rngTimeBetweenUpdatesMs = rngTimeAskedInput;
         tmp->rngTimeSinceUpdateMs = 0;
+        WaitForSingleObject(rngListMutex, INFINITE);
         tmp->next = (*rngHead);
         (*rngHead) = tmp;
-        rngCount += 1;
         ReleaseMutex(rngListMutex);
+        rngCount += 1;
         return true;
     }
     else
     {
-        ReleaseMutex(rngListMutex);
         return false;
     }
 }
@@ -100,7 +102,7 @@ void update_rngs(rngNode* rngHead)
     ReleaseMutex(rngListMutex);
 }
 
-DWORD WINAPI rng_updater(int n)
+DWORD WINAPI rng_updater()
 {
     while (true)
     {
@@ -109,96 +111,74 @@ DWORD WINAPI rng_updater(int n)
     }
 }
 
-void multithread_list()
+void command_process()
 {
-    rngListMutex = CreateMutex(NULL,FALSE,NULL);
-
-    CreateThread(NULL,0,rng_updater,NULL,0,&threadID);
-
-    printf("Commands for rng actions: ");
-    printf("\n\n");
-    printf("To print the amount of rngs working type: \"count_rngs\"");
-    printf("\n\n");
-    printf("To add rng type: \"add_rng N T\" where N is the upper limit of generatable number, T is the time between generations");
-    printf("\n\n");
-    printf("To print the summ of all rng results type: \"print_summ\"");
-    printf("\n\n");
-    printf("To exit type: \"exit\"");
-    printf("\n");
-
-    uint8_t commandInput[20] = { 0 };
-
-    while (strstr(argv[0], "exit") == NULL)
+    gets_s(commandInput, 20);
+    if (!command_parse(commandInput))
     {
-        gets_s(commandInput, 20);
-        if (!command_parse(commandInput))
-        {
-            printf("too much arguments");
-            printf("\n");
-        }
-
-        if ((strstr(argv[0], "count_rngs") == NULL) && (strstr(argv[0], "add_rng") == NULL) && (strstr(argv[0], "print_summ") == NULL) && (strstr(argv[0], "exit") == NULL))
-        {
-            printf("there is no such command");
-            printf("\n");
-        }
-
-        if (strstr(argv[0], "count_rngs") != NULL)
-        {
-            if (argc != 1)
-            {
-                printf("count_rngs command have to have zero arguments");
-                printf("\n");
-            }
-            else
-            {
-                printf("amount of rngs active: ");
-                printf("\n");
-                printf("%d", rngCount);
-                printf("\n");
-            }
-        }
-
-        if (strstr(argv[0], "print_summ") != NULL)
-        {
-            if (argc != 1)
-            {
-                printf("print_summ command have to have zero arguments");
-                printf("\n");
-            }
-            else
-            {
-                printf("summ of rng values: ");
-                printf("\n");
-                printf("%d", rngSumm);
-                printf("\n");
-            }
-        }
-
-        if (strstr(argv[0], "add_rng") != NULL)
-        {
-            if (argc != 3)
-            {
-                printf("add_rng command have to have two arguments");
-                printf("\n");
-            }
-            else
-            {
-                int MaxNumber = atoi(argv[1]);
-                int TimeBetweenUpdatesMs = atoi(argv[2]) * ONE_SECOND_IN_MS;
-                if (!add_rng(&rngListHead, MaxNumber, TimeBetweenUpdatesMs))
-                {
-                    printf("there is no free memory");
-                    printf("\n");
-                }
-                else
-                {
-                    printf("rng added succesfully");
-                    printf("\n");
-                }
-            }
-        }
-        
-
+        printf("too much arguments");
+        printf("\n");
     }
-}
+
+    if ((strstr(argv[0], "count_rngs") == NULL) && (strstr(argv[0], "add_rng") == NULL) && (strstr(argv[0], "print_summ") == NULL) && (strstr(argv[0], "exit") == NULL))
+    {
+        printf("there is no such command");
+        printf("\n");
+    }
+
+    if (strstr(argv[0], "count_rngs") != NULL)
+    {
+        if (argc != 1)
+        {
+            printf("count_rngs command have to have zero arguments");
+            printf("\n");
+        }
+        else
+        {
+            printf("amount of rngs active: ");
+            printf("\n");
+            printf("%d", rngCount);
+            printf("\n");
+        }
+    }
+
+    if (strstr(argv[0], "print_summ") != NULL)
+    {
+        if (argc != 1)
+        {
+            printf("print_summ command have to have zero arguments");
+            printf("\n");
+        }
+        else
+        {
+            printf("summ of rng values: ");
+            printf("\n");
+            printf("%d", rngSumm);
+            printf("\n");
+        }
+    }
+
+    if (strstr(argv[0], "add_rng") != NULL)
+    {
+        if (argc != 3)
+        {
+            printf("add_rng command have to have two arguments");
+            printf("\n");
+        }
+        else
+        {
+            int MaxNumber = atoi(argv[1]);
+            int TimeBetweenUpdatesMs = atoi(argv[2]) * ONE_SECOND_IN_MS;
+            if (!add_rng(&rngListHead, MaxNumber, TimeBetweenUpdatesMs))
+            {
+                printf("there is no free memory");
+                printf("\n");
+            }
+            else
+            {
+                printf("rng added succesfully");
+                printf("\n");
+            }
+        }
+    }
+} 
