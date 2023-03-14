@@ -1,4 +1,4 @@
-#include "multithread.h"
+#include "command.h"
 
 void main()
 {

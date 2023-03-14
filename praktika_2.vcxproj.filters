@@ -18,12 +18,18 @@
     <ClCompile Include="main.c">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="multithread.c">
+    <ClCompile Include="command.c">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="rng.c">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="multithread.h">
+    <ClInclude Include="command.h">
+      <Filter>Исходные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="rng.h">
       <Filter>Исходные файлы</Filter>
     </ClInclude>
   </ItemGroup>

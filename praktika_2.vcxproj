@@ -128,10 +128,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.c" />
-    <ClCompile Include="multithread.c" />
+    <ClCompile Include="command.c" />
+    <ClCompile Include="rng.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="multithread.h" />
+    <ClInclude Include="command.h" />
+    <ClInclude Include="rng.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

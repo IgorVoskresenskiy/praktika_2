@@ -15,5 +15,4 @@ char argv[4][20] = { 0 };
 int threadID = 0;
 uint8_t commandInput[20] = { 0 };
 
-
 DWORD WINAPI rng_updater();
