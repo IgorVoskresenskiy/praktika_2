@@ -27,5 +27,8 @@ extern rngNode* rngListHead;
 extern HANDLE rngListMutex;
 extern int rngSumm;
 extern int rngCount;
-extern int argc;
+
+void rng_init();
+bool add_rng(rngNode** rngHead, int rngNumberInput, int rngTimeAskedInput);
+void update_rngs(rngNode* rngHead);
 

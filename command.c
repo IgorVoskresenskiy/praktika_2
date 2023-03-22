@@ -1,9 +1,10 @@
 #include "command.h"
 #include "rng.h"
 
-int threadID = 0;
 char argv[4][20] = { 0 };
-uint8_t commandInput[20] = { 0 };
+
+static uint8_t commandInput[20] = { 0 };
+static int argc = 0;
 
 bool command_parse(char* inputCommand)
 {
@@ -16,7 +17,7 @@ bool command_parse(char* inputCommand)
 
     while (ptrToParsingString = strchr(ptrToParsingString, ' '))
     {
-        uint8_t sizeOfParsedArg = ptrToParsingString - ptrToStartOfArg;
+        uint8_t sizeOfParsedArg = (uint8_t)(ptrToParsingString - ptrToStartOfArg);
 
         memcpy(argv[argc], ptrToStartOfArg, sizeOfParsedArg);
 
@@ -36,15 +37,21 @@ bool command_parse(char* inputCommand)
         ptrToStartOfArg = ptrToParsingString;
     }
 
-    uint8_t sizeOfParsedArg = inputCommand + strlen(inputCommand) - ptrToStartOfArg;
+    uint8_t sizeOfParsedArg = inputCommand + ((uint8_t)(strlen(inputCommand)) - (uint8_t)(ptrToStartOfArg));
     memcpy(argv[argc], ptrToStartOfArg, sizeOfParsedArg);
 
     argc++;
+    return true;
 }
 
-void command_process()
+bool command_process()
 {
     gets_s(commandInput, 20);
+    if (strcmp(commandInput, "exit")==0)
+    {
+        return false;
+    }
+
     if (!command_parse(commandInput))
     {
         printf("too much arguments");
@@ -112,4 +119,5 @@ void command_process()
             }
         }
     }
+    return true;
 } 

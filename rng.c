@@ -1,10 +1,9 @@
-#include "command.h"
 #include "rng.h"
 
 HANDLE rngListMutex;
 int rngSumm = 0;
 int rngCount = 0;
-int argc = 0;
+
 rngNode* rngListHead = NULL;
 
 void rng_init()
@@ -51,13 +50,4 @@ void update_rngs(rngNode* rngHead)
         tmp = tmp->next;
     }
     ReleaseMutex(rngListMutex);
-}
-
-DWORD WINAPI rng_updater()
-{
-    while (true)
-    {
-        Sleep(ONE_SECOND_IN_MS);
-        update_rngs(rngListHead);
-    }
 }

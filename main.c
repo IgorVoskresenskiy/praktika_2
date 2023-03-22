@@ -1,10 +1,22 @@
 #include "command.h"
+#include "rng.h"
+
+int threadID = 0;
+
+DWORD WINAPI background_task(LPVOID lpVoid)
+{
+    while (true)
+    {
+        Sleep(ONE_SECOND_IN_MS);
+        update_rngs(rngListHead);
+    }
+}
 
 void main()
 {
     rng_init();
 
-    CreateThread(NULL, 0, rng_updater, NULL, 0, &threadID);
+    CreateThread(NULL, 0, background_task, NULL, 0, &threadID);
 
     printf("Commands for rng actions: ");
     printf("\n\n");
@@ -17,8 +29,8 @@ void main()
     printf("To exit type: \"exit\"");
     printf("\n");
 
-    while (strstr(argv[0], "exit") == NULL)
+    while (command_process())
     {
-        command_process(commandInput);
+
     }
 }

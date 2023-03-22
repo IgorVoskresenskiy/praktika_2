@@ -12,7 +12,7 @@
 #include "synchapi.h"
 
 extern char argv[4][20];
-extern int threadID;
-extern uint8_t commandInput[20];
 
-DWORD WINAPI rng_updater();
+bool command_parse(char* inputCommand);
+bool command_process();
+
