@@ -1,8 +1,7 @@
 #include "command.h"
 #include "rng.h"
 
-char argv[4][20] = { 0 };
-
+static char argv[4][20] = { 0 };
 static uint8_t commandInput[20] = { 0 };
 static int argc = 0;
 

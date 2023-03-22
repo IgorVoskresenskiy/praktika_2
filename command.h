@@ -11,8 +11,6 @@
 #include "string.h"
 #include "synchapi.h"
 
-extern char argv[4][20];
-
 bool command_parse(char* inputCommand);
 bool command_process();
 
