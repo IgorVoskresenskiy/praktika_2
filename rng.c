@@ -1,46 +1,15 @@
 #include "command.h"
 #include "rng.h"
 
+HANDLE rngListMutex;
+int rngSumm = 0;
+int rngCount = 0;
+int argc = 0;
+rngNode* rngListHead = NULL;
+
 void rng_init()
 {
     rngListMutex = CreateMutex(NULL, FALSE, NULL);
-}
-
-bool command_parse(char* inputCommand)
-{
-    memset(argv, 0, sizeof(argv));
-    argc = 0;
-    int i = 0;
-
-    char* ptrToParsingString = inputCommand;
-    char* ptrToStartOfArg = inputCommand;
-
-    while (ptrToParsingString = strchr(ptrToParsingString, ' '))
-    {
-        uint8_t sizeOfParsedArg = ptrToParsingString - ptrToStartOfArg;
-
-        memcpy(argv[argc], ptrToStartOfArg, sizeOfParsedArg);
-
-        if (ptrToParsingString == NULL)
-        {
-            break;
-        }
-
-        argc++;
-
-        if (argc > MAX_ARGC)
-        {
-            return false;
-        }
-
-        ptrToParsingString++;
-        ptrToStartOfArg = ptrToParsingString;
-    }
-
-    uint8_t sizeOfParsedArg = inputCommand + strlen(inputCommand) - ptrToStartOfArg;
-    memcpy(argv[argc], ptrToStartOfArg, sizeOfParsedArg);
-
-    argc++;
 }
 
 bool add_rng(rngNode** rngHead, int rngNumberInput, int rngTimeAskedInput)

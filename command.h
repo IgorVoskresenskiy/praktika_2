@@ -11,8 +11,10 @@
 #include "string.h"
 #include "synchapi.h"
 
-char argv[4][20] = { 0 };
-int threadID = 0;
-uint8_t commandInput[20] = { 0 };
+#define ONE_SECOND_IN_MS 1000
+
+extern char argv[4][20];
+extern int threadID;
+extern uint8_t commandInput[20];
 
 DWORD WINAPI rng_updater();

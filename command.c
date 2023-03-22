@@ -1,6 +1,47 @@
 #include "command.h"
 #include "rng.h"
 
+int threadID = 0;
+char argv[4][20] = { 0 };
+uint8_t commandInput[20] = { 0 };
+
+bool command_parse(char* inputCommand)
+{
+    memset(argv, 0, sizeof(argv));
+    argc = 0;
+    int i = 0;
+
+    char* ptrToParsingString = inputCommand;
+    char* ptrToStartOfArg = inputCommand;
+
+    while (ptrToParsingString = strchr(ptrToParsingString, ' '))
+    {
+        uint8_t sizeOfParsedArg = ptrToParsingString - ptrToStartOfArg;
+
+        memcpy(argv[argc], ptrToStartOfArg, sizeOfParsedArg);
+
+        if (ptrToParsingString == NULL)
+        {
+            break;
+        }
+
+        argc++;
+
+        if (argc > MAX_ARGC)
+        {
+            return false;
+        }
+
+        ptrToParsingString++;
+        ptrToStartOfArg = ptrToParsingString;
+    }
+
+    uint8_t sizeOfParsedArg = inputCommand + strlen(inputCommand) - ptrToStartOfArg;
+    memcpy(argv[argc], ptrToStartOfArg, sizeOfParsedArg);
+
+    argc++;
+}
+
 void command_process()
 {
     gets_s(commandInput, 20);

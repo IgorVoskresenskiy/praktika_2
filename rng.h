@@ -22,10 +22,10 @@ typedef struct rngNode
     int rngTimeSinceUpdateMs;
     struct rngNode* next;
 } rngNode;
-rngNode* rngListHead = NULL;
+extern rngNode* rngListHead;
 
-HANDLE rngListMutex;
-int rngSumm = 0;
-int rngCount = 0;
-int argc = 0;
+extern HANDLE rngListMutex;
+extern int rngSumm;
+extern int rngCount;
+extern int argc;
 
