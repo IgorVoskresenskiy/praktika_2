@@ -11,8 +11,6 @@
 #include "string.h"
 #include "synchapi.h"
 
-#define ONE_SECOND_IN_MS 1000
-
 extern char argv[4][20];
 extern int threadID;
 extern uint8_t commandInput[20];
