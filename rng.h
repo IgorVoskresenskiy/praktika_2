@@ -24,9 +24,8 @@ typedef struct rngNode
 } rngNode;
 extern rngNode* rngListHead;
 
-extern HANDLE rngListMutex;
-extern int rngSumm;
-extern int rngCount;
+extern unsigned int rngSumm;
+extern unsigned int rngCount;
 
 void rng_init();
 bool add_rng(rngNode** rngHead, int rngNumberInput, int rngTimeAskedInput);

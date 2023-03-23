@@ -1,8 +1,8 @@
 #include "rng.h"
 
 HANDLE rngListMutex;
-int rngSumm = 0;
-int rngCount = 0;
+unsigned int rngSumm = 0;
+unsigned int rngCount = 0;
 
 rngNode* rngListHead = NULL;
 
@@ -46,7 +46,10 @@ void update_rngs(rngNode* rngHead)
             tmp->rngValue = rands % tmp->rngMaxNumber;
             tmp->rngTimeSinceUpdateMs = 0;
         }
-        rngSumm += tmp->rngValue;
+        if (tmp->rngValue > 0)
+        {
+            rngSumm += tmp->rngValue;
+        }
         tmp = tmp->next;
     }
     ReleaseMutex(rngListMutex);
